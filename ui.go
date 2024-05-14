@@ -16,6 +16,7 @@ type UI interface {
 	SetBounds(Bounds) error
 	Bind(name string, f interface{}) error
 	Eval(js string) Value
+	InjectJS(js string) error
 	Done() <-chan struct{}
 	Close() error
 }
@@ -109,6 +110,8 @@ func (u *ui) Close() error {
 }
 
 func (u *ui) Load(url string) error { return u.chrome.load(url) }
+
+func (u *ui) InjectJS(js string) error { return u.chrome.inject(js) }
 
 func (u *ui) Bind(name string, f interface{}) error {
 	v := reflect.ValueOf(f)

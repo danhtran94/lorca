@@ -424,6 +424,17 @@ func (c *chrome) bind(name string, f bindingFunc) error {
 	return err
 }
 
+func (c *chrome) inject(jsscript string) error {
+	_, err := c.send("Page.addScriptToEvaluateOnNewDocument", h{"source": jsscript})
+	if err != nil {
+		return err
+	}
+
+	_, err = c.eval(jsscript)
+
+	return nil
+}
+
 func (c *chrome) setBounds(b Bounds) error {
 	if b.WindowState == "" {
 		b.WindowState = WindowStateNormal
