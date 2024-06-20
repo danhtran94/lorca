@@ -35,6 +35,11 @@ type msg struct {
 	Params json.RawMessage `json:"params"`
 }
 
+type logger interface {
+	Debugf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
+
 type chrome struct {
 	sync.Mutex
 	cmd      *exec.Cmd
@@ -43,11 +48,12 @@ type chrome struct {
 	target   string
 	session  string
 	window   int
+	logger   logger
 	pending  map[int]chan result
 	bindings map[string]bindingFunc
 }
 
-func newChromeWithArgs(chromeBinary string, args ...string) (*chrome, error) {
+func newChromeWithArgs(chromeBinary string, logger logger, args ...string) (*chrome, error) {
 	// The first two IDs are used internally during the initialization
 	c := &chrome{
 		id:       2,
@@ -270,7 +276,15 @@ func (c *chrome) readLoop() {
 			json.Unmarshal([]byte(params.Message), &res)
 
 			if res.ID == 0 && res.Method == "Runtime.consoleAPICalled" || res.Method == "Runtime.exceptionThrown" {
-				log.Println(params.Message)
+				if c.logger != nil {
+					if res.Method == "Runtime.exceptionThrown" {
+						c.logger.Errorf("chrome: %s", params.Message)
+					} else {
+						c.logger.Debugf("chrome: %s", params.Message)
+					}
+				} else {
+					log.Println(params.Message)
+				}
 			} else if res.ID == 0 && res.Method == "Runtime.bindingCalled" {
 				payload := struct {
 					Name string            `json:"name"`

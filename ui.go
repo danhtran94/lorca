@@ -62,7 +62,7 @@ var defaultChromeArgs = []string{
 // string - a temporary directory is created and it will be removed on
 // ui.Close(). You might want to use "--headless" custom CLI argument to test
 // your UI code.
-func New(url, dir string, width, height int, customArgs ...string) (UI, error) {
+func New(url, dir string, width, height int, logger logger, customArgs ...string) (UI, error) {
 	if url == "" {
 		url = "data:text/html,<html></html>"
 	}
@@ -80,7 +80,8 @@ func New(url, dir string, width, height int, customArgs ...string) (UI, error) {
 	args = append(args, customArgs...)
 	args = append(args, "--remote-debugging-port=0")
 
-	chrome, err := newChromeWithArgs(ChromeExecutable(), args...)
+	chrome, err := newChromeWithArgs(ChromeExecutable(), logger, args...)
+	chrome.logger = logger
 	done := make(chan struct{})
 	if err != nil {
 		return nil, err
